@@ -64,6 +64,16 @@ class ProxyHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                 if k_lower not in ['host', 'connection', 'content-length']:
                     headers[k] = v
             
+            # Explicitly ensure Authorization is included
+            if 'Authorization' not in headers:
+                auth = self.headers.get('Authorization')
+                if auth:
+                    headers['Authorization'] = auth
+            
+            print(f"[DEBUG] {method} {self.path} - Headers: {list(headers.keys())}")
+            if 'Authorization' in headers:
+                print(f"[DEBUG] Authorization found: {headers['Authorization'][:20]}...")
+            
             req = urllib.request.Request(
                 url,
                 data=body if body else None,
