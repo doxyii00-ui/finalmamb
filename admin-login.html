@@ -162,25 +162,11 @@
                 const data = await response.json();
 
                 if (response.ok) {
-                    // Sprawdzić czy user jest admin
-                    const verifyResponse = await fetch(`${API_URL}/api/auth/verify`, {
-                        method: 'GET',
-                        headers: { 
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${data.access_token}`
-                        }
-                    });
-
-                    if (verifyResponse.ok) {
-                        // Zapisz token dla admin panelu
-                        localStorage.setItem('admin_token', data.access_token);
-                        messageDiv.className = 'success';
-                        messageDiv.textContent = 'Zalogowano! Wchodzę do panelu...';
-                        setTimeout(() => window.location.href = '/admin.html', 1500);
-                    } else {
-                        messageDiv.className = 'error';
-                        messageDiv.textContent = 'Błąd weryfikacji tokenu';
-                    }
+                    // Zapisz token dla admin panelu
+                    localStorage.setItem('admin_token', data.access_token);
+                    messageDiv.className = 'success';
+                    messageDiv.textContent = 'Zalogowano! Wchodzę do panelu...';
+                    setTimeout(() => window.location.href = '/admin.html', 1500);
                 } else {
                     messageDiv.className = 'error';
                     messageDiv.textContent = data.error || 'Błąd logowania!';
