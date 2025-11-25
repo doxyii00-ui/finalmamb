@@ -57,22 +57,27 @@ class ProxyHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
 
             url = BACKEND_URL + self.path
             
-            # Preserve important headers
+            # Build headers - explicitly handle Authorization
             headers = {}
+            authorization = None
+            
             for k, v in self.headers.items():
                 k_lower = k.lower()
-                if k_lower not in ['host', 'connection', 'content-length']:
+                # Skip certain headers
+                if k_lower in ['host', 'connection', 'content-length']:
+                    continue
+                # Capture Authorization separately to ensure it's passed
+                if k_lower == 'authorization':
+                    authorization = v
+                    headers[k] = v
+                else:
                     headers[k] = v
             
-            # Explicitly ensure Authorization is included
-            if 'Authorization' not in headers:
-                auth = self.headers.get('Authorization')
-                if auth:
-                    headers['Authorization'] = auth
-            
-            print(f"[DEBUG] {method} {self.path} - Headers: {list(headers.keys())}")
-            if 'Authorization' in headers:
-                print(f"[DEBUG] Authorization found: {headers['Authorization'][:20]}...")
+            # If Authorization wasn't found with any casing, try to get it
+            if not authorization:
+                authorization = self.headers.get('Authorization') or self.headers.get('authorization')
+                if authorization:
+                    headers['Authorization'] = authorization
             
             req = urllib.request.Request(
                 url,
