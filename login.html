@@ -171,8 +171,8 @@
         
         let isLogin = true;
 
-        // Get API domain from environment
-        const API_URL = window.location.origin.replace(':5000', ':3000');
+        // Use local API proxy
+        const API_URL = window.location.origin;
 
         toggleBtn.addEventListener('click', () => {
             isLogin = !isLogin;
