@@ -57,11 +57,18 @@ class ProxyHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
 
             url = BACKEND_URL + self.path
             
+            # Preserve important headers
+            headers = {}
+            for k, v in self.headers.items():
+                k_lower = k.lower()
+                if k_lower not in ['host', 'connection', 'content-length']:
+                    headers[k] = v
+            
             req = urllib.request.Request(
                 url,
                 data=body if body else None,
                 method=method,
-                headers={k: v for k, v in self.headers.items() if k.lower() not in ['host', 'connection']}
+                headers=headers
             )
 
             with urllib.request.urlopen(req) as response:
@@ -79,7 +86,10 @@ class ProxyHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         except urllib.error.HTTPError as e:
             self.send_response(e.code)
             self.end_headers()
-            self.wfile.write(e.read())
+            try:
+                self.wfile.write(e.read())
+            except:
+                self.wfile.write(json.dumps({'error': str(e)}).encode())
         except Exception as e:
             self.send_response(502)
             self.end_headers()
