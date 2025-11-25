@@ -304,8 +304,9 @@
         }
 
         function logout() {
-            localStorage.removeItem('token');
-            window.location.href = '/login.html';
+            localStorage.removeItem('admin_user_id');
+            localStorage.removeItem('admin_username');
+            window.location.href = '/admin-login.html';
         }
 
         loadUsers();
