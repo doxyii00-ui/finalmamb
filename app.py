@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import os
 from datetime import datetime, timedelta
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, send_file
 from flask_cors import CORS
 import psycopg
 from psycopg.rows import dict_row
@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='.', static_url_path='')
 CORS(app)
 
 # Database Connection
@@ -58,6 +58,27 @@ def init_db():
         print("Database initialized successfully")
     except Exception as e:
         print(f"Database initialization error: {e}")
+
+# Serve HTML files
+@app.route('/')
+def index():
+    return send_file('admin-login.html')
+
+@app.route('/admin-login.html')
+def admin_login_page():
+    return send_file('admin-login.html')
+
+@app.route('/login.html')
+def login_page():
+    return send_file('login.html')
+
+@app.route('/gen.html')
+def gen_page():
+    return send_file('gen.html')
+
+@app.route('/admin.html')
+def admin_page():
+    return send_file('admin.html')
 
 # Routes
 @app.route('/api/auth/create-user', methods=['POST'])
