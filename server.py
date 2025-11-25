@@ -6,9 +6,9 @@ import urllib.request
 import urllib.error
 import json
 
-PORT = 5000
+PORT = int(os.environ.get('PORT', 5000))
 HOST = "0.0.0.0"
-BACKEND_URL = "http://localhost:3000"
+BACKEND_URL = os.environ.get('BACKEND_URL', 'http://localhost:3000')
 
 class ProxyHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
     def end_headers(self):
