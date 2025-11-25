@@ -62,8 +62,10 @@ def init_db():
         print(f"Database initialization error: {e}")
 
 # Routes
-@app.route('/api/auth/register', methods=['POST'])
-def register():
+@app.route('/api/auth/create-user', methods=['POST'])
+@jwt_required()
+def create_user():
+    admin_id = get_jwt_identity()
     data = request.get_json()
     username = data.get('username')
     password = data.get('password')
@@ -73,12 +75,21 @@ def register():
     
     try:
         conn = get_db()
-        cur = conn.cursor()
-        cur.execute('INSERT INTO users (username, password) VALUES (%s, %s)', (username, password))
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+        
+        # Check if admin
+        cur.execute('SELECT is_admin FROM users WHERE id = %s', (admin_id,))
+        user = cur.fetchone()
+        if not user or not user['is_admin']:
+            return jsonify({'error': 'Admin access required'}), 403
+        
+        # Create user with access enabled by default
+        cur.execute('INSERT INTO users (username, password, has_access) VALUES (%s, %s, %s)', 
+                   (username, password, True))
         conn.commit()
         cur.close()
         conn.close()
-        return jsonify({'message': 'User registered successfully'}), 201
+        return jsonify({'message': 'User created successfully'}), 201
     except psycopg2.IntegrityError:
         return jsonify({'error': 'Username already exists'}), 409
     except Exception as e:

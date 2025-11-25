@@ -130,6 +130,7 @@
 
         <div class="tabs">
             <button class="tab active" onclick="switchTab('users')">Użytkownicy</button>
+            <button class="tab" onclick="switchTab('create')">Stwórz konto</button>
             <button class="tab" onclick="switchTab('documents')">Dokumenty</button>
         </div>
 
@@ -147,6 +148,22 @@
                 </thead>
                 <tbody></tbody>
             </table>
+        </div>
+
+        <div id="create" class="tab-content">
+            <h2>Stwórz nowe konto</h2>
+            <form id="createUserForm" style="max-width: 400px;">
+                <div class="form-group" style="margin-bottom: 15px;">
+                    <label for="newUsername" style="display: block; margin-bottom: 5px; color: #777;">Nazwa użytkownika:</label>
+                    <input type="text" id="newUsername" placeholder="np. john_doe" required style="width: 100%; padding: 10px; border: 1px solid rgba(150, 0, 255, 0.3); border-radius: 5px; background: rgba(0,0,0,0.3); color: #eee;">
+                </div>
+                <div class="form-group" style="margin-bottom: 15px;">
+                    <label for="newPassword" style="display: block; margin-bottom: 5px; color: #777;">Hasło:</label>
+                    <input type="text" id="newPassword" placeholder="np. SecurePass123" required style="width: 100%; padding: 10px; border: 1px solid rgba(150, 0, 255, 0.3); border-radius: 5px; background: rgba(0,0,0,0.3); color: #eee;">
+                </div>
+                <button type="submit" style="width: 100%; padding: 10px; background: #9c27b0; border: none; border-radius: 5px; color: white; font-weight: 600; cursor: pointer;">Stwórz konto</button>
+                <div id="createMessage" style="margin-top: 15px; text-align: center;"></div>
+            </form>
         </div>
 
         <div id="documents" class="tab-content">
@@ -182,7 +199,44 @@
             event.target.classList.add('active');
 
             if (tab === 'users') loadUsers();
-            else loadDocuments();
+            else if (tab === 'documents') loadDocuments();
+            else if (tab === 'create') setupCreateForm();
+        }
+
+        function setupCreateForm() {
+            const form = document.getElementById('createUserForm');
+            const messageDiv = document.getElementById('createMessage');
+            
+            form.onsubmit = async (e) => {
+                e.preventDefault();
+                const username = document.getElementById('newUsername').value;
+                const password = document.getElementById('newPassword').value;
+                
+                try {
+                    const response = await fetch(`${API_URL}/api/auth/create-user`, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ username, password })
+                    });
+
+                    const data = await response.json();
+                    
+                    if (response.ok) {
+                        messageDiv.style.color = '#33ff33';
+                        messageDiv.textContent = `✅ Konto "${username}" stworzone pomyślnie!`;
+                        form.reset();
+                    } else {
+                        messageDiv.style.color = '#ff3333';
+                        messageDiv.textContent = `❌ Błąd: ${data.error}`;
+                    }
+                } catch (error) {
+                    messageDiv.style.color = '#ff3333';
+                    messageDiv.textContent = `❌ Błąd: ${error.message}`;
+                }
+            };
         }
 
         async function loadUsers() {
