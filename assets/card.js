@@ -195,9 +195,19 @@ function refreshCardData() {
   setData("pesel", pesel);
 }
 
-// Call immediately if data is available
+// Call immediately if data is available from sessionStorage or URL params
 if (Object.keys(data).length > 0) {
   refreshCardData();
+}
+
+// If we're waiting for server data (doc_id case), also make sure refreshCardData runs after a short delay
+// to catch data that was fetched from the server
+if (docId && Object.keys(data).length === 0) {
+  setTimeout(function() {
+    if (Object.keys(data).length > 0) {
+      refreshCardData();
+    }
+  }, 500);
 }
 
 function setData(id, value){
