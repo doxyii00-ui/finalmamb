@@ -1,5 +1,30 @@
 // Pobierz parametry z URL
 var params = new URLSearchParams(window.location.search);
+var docId = params.get('doc_id');
+
+// Funkcja pobierania dokumentu z serwera
+async function fetchDocumentData() {
+    if (!docId) {
+        // Jeśli brak doc_id, używaj starych parametrów
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/documents/${docId}`);
+        if (response.ok) {
+            const data = await response.json();
+            // Przechowaj dane dokumentu w sessionStorage
+            sessionStorage.setItem('document_data', JSON.stringify(data));
+            // Przechowaj doc_id dla home.html
+            sessionStorage.setItem('doc_id', docId);
+        }
+    } catch (error) {
+        console.error('Błąd pobierania dokumentu:', error);
+    }
+}
+
+// Pobierz dokument przy ładowaniu strony
+fetchDocumentData();
 
 // Obsługa kliknięcia przycisku login
 document.querySelector(".login").addEventListener('click', () => {
@@ -16,7 +41,13 @@ document.querySelector(".welcome").innerHTML = welcome;
 
 // Funkcja przekierowania do home.html z parametrami
 function toHome(){
-    location.href = 'home.html?' + params.toString();
+    // Jeśli mamy doc_id, przekieruj z nim
+    if (docId) {
+        location.href = 'home.html?doc_id=' + docId;
+    } else {
+        // W przeciwnym razie użyj starych parametrów
+        location.href = 'home.html?' + params.toString();
+    }
 }
 
 // Obsługa Enter w polu hasła
