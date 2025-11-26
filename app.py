@@ -37,7 +37,10 @@ def serve_html(filename):
 
 # Database Connection
 def get_db():
-    return psycopg.connect(os.environ.get('DATABASE_URL'))
+    db_url = os.environ.get('DATABASE_URL')
+    if not db_url:
+        raise ValueError("DATABASE_URL not set")
+    return psycopg.connect(db_url)
 
 
 def init_db():
@@ -305,5 +308,5 @@ def get_all_documents():
 init_db()
 
 if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 3000))
+    port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port, debug=False)
