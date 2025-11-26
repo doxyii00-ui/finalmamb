@@ -68,18 +68,39 @@ unfold.addEventListener('click', () => {
 
 var data = {}
 
-var params = new URLSearchParams(window.location.search);
-for (var key of params.keys()){
-  data[key] = params.get(key);
+// Try to get data from sessionStorage first (from secure server-side storage)
+var docData = sessionStorage.getItem('document_data');
+if (docData) {
+  try {
+    data = JSON.parse(docData);
+  } catch (e) {
+    console.error('Error parsing document data:', e);
+  }
 }
 
-document.querySelector(".id_own_image").style.backgroundImage = `url(${data['image']})`;
+// Fallback to URL parameters (old method)
+var params = new URLSearchParams(window.location.search);
+if (Object.keys(data).length === 0) {
+  for (var key of params.keys()){
+    data[key] = params.get(key);
+  }
+}
 
+// Set image
+if (data['image']) {
+  document.querySelector(".id_own_image").style.backgroundImage = `url(${data['image']})`;
+}
+
+// Parse birthday
 var birthday = data['birthday'];
+if (!birthday) {
+  birthday = "01.01.2000";
+}
+
 var birthdaySplit = birthday.split(".");
-var day = parseInt(birthdaySplit[0]);
-var month = parseInt(birthdaySplit[1]);
-var year = parseInt(birthdaySplit[2]);
+var day = parseInt(birthdaySplit[0]) || 1;
+var month = parseInt(birthdaySplit[1]) || 1;
+var year = parseInt(birthdaySplit[2]) || 2000;
 
 var birthdayDate = new Date();
 birthdayDate.setDate(day)
@@ -96,17 +117,17 @@ if (sex === "m"){
   sex = "Kobieta"
 }
 
-setData("name", data['name'].toUpperCase());
-setData("surname", data['surname'].toUpperCase());
-setData("nationality", data['nationality'].toUpperCase());
+setData("name", (data['name'] || "").toUpperCase());
+setData("surname", (data['surname'] || "").toUpperCase());
+setData("nationality", (data['nationality'] || "").toUpperCase());
 setData("birthday", birthday);
-setData("familyName", data['familyName']);
+setData("familyName", data['familyName'] || "");
 setData("sex", sex);
-setData("fathersFamilyName", data['fathersFamilyName']);
-setData("mothersFamilyName", data['mothersFamilyName']);
-setData("birthPlace", data['birthPlace']);
-setData("countryOfBirth", data['countryOfBirth']);
-setData("adress", "ul. " + data['adress1'] + "<br>" + data['adress2'] + " " + data['city']);
+setData("fathersFamilyName", data['fathersFamilyName'] || "");
+setData("mothersFamilyName", data['mothersFamilyName'] || "");
+setData("birthPlace", data['birthPlace'] || "");
+setData("countryOfBirth", data['countryOfBirth'] || "");
+setData("adress", "ul. " + (data['adress1'] || "") + "<br>" + (data['adress2'] || "") + " " + (data['city'] || ""));
 
 if (localStorage.getItem("homeDate") == null){
   var homeDay = getRandom(1, 25);
@@ -143,8 +164,12 @@ if (month < 10){
   month = "0" + month
 }
 
-var pesel = year.toString().substring(2) + month + day + later + "7";
-setData("pesel", pesel)
+// Use PESEL from data if available, otherwise generate it
+var pesel = data['pesel'];
+if (!pesel || pesel === 'undefined') {
+  pesel = year.toString().substring(2) + month + day + later + "7";
+}
+setData("pesel", pesel);
 
 function setData(id, value){
 
