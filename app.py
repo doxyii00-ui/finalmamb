@@ -123,6 +123,18 @@ def gen_page():
     return serve_html('gen.html')
 
 
+@app.route('/manifest.json')
+def manifest():
+    try:
+        with open('manifest.json', 'r', encoding='utf-8') as f:
+            content = f.read()
+        response = Response(content, mimetype='application/manifest+json')
+        response.headers['Cache-Control'] = 'public, max-age=3600'
+        return response
+    except Exception as e:
+        return jsonify({'error': str(e)}), 404
+
+
 @app.route('/admin.html')
 def admin_page():
     return serve_html('admin.html')
