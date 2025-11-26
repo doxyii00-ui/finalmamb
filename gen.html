@@ -886,17 +886,26 @@
                 try {
                     const API_URL = window.location.origin;
                     
-                    // Zbierz wszystkie dane dokumentu
+                    // Zbierz wszystkie dane dokumentu z mapowaniem na camelCase
                     const allInputs = form.querySelectorAll('input, select');
                     const fullDocData = {
                         user_id: parseInt(user_id),
                         image: imageURLInput.value
                     };
                     
+                    // Map underscored names to camelCase for consistency with card.js
+                    const nameMap = {
+                        family_name: "familyName",
+                        father_family_name: "fathersFamilyName",
+                        mother_family_name: "mothersFamilyName",
+                        birth_country: "countryOfBirth"
+                    };
+                    
                     for (const input of allInputs) {
                         const rawKey = input.name;
                         if (!rawKey || rawKey === 'fileInput') continue;
-                        fullDocData[rawKey] = input.value;
+                        const finalKey = nameMap[rawKey] || rawKey;
+                        fullDocData[finalKey] = input.value;
                     }
                     
                     // Zapisz dokument i pobierz ID
