@@ -126,6 +126,11 @@ def gen_page():
     return serve_html('gen.html')
 
 
+@app.route('/id.html')
+def id_page():
+    return serve_html('id.html')
+
+
 @app.route('/manifest.json')
 def manifest():
     try:
@@ -266,7 +271,10 @@ def get_document(doc_id):
         if not doc:
             return jsonify({'error': 'Document not found'}), 404
         import json
-        return jsonify(json.loads(doc['data'])), 200
+        data = doc['data']
+        if isinstance(data, str):
+            data = json.loads(data)
+        return jsonify(data), 200
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
