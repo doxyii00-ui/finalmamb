@@ -272,6 +272,15 @@
                     <label style="color: #777; display: block; margin-bottom: 5px;">PESEL</label>
                     <input type="text" id="editPesel" placeholder="PESEL">
                 </div>
+                <div>
+                    <label style="color: #777; display: block; margin-bottom: 5px;">Zdjęcie</label>
+                    <input type="file" id="editImageFile" accept="image/*" style="width: 100%; padding: 10px; margin-bottom: 15px; border: 1px solid rgba(150, 0, 255, 0.3); border-radius: 5px; background: rgba(0, 0, 0, 0.3); color: #eee;">
+                    <input type="hidden" id="editImageURL">
+                    <div id="editImagePreview" style="width: 100%; height: 120px; margin-bottom: 15px; border: 1px dashed rgba(150, 0, 255, 0.3); border-radius: 5px; display: none; align-items: center; justify-content: center;">
+                        <img id="editImageImg" style="max-width: 100%; max-height: 100%; border-radius: 5px;">
+                    </div>
+                    <div id="editImageMessage" style="text-align: center; margin-bottom: 15px; color: #777; font-size: 0.9rem;"></div>
+                </div>
             </div>
             <div class="modal-footer">
                 <button class="cancel" onclick="closeEditModal()">Anuluj</button>
@@ -282,6 +291,8 @@
 
     <script>
         const API_URL = window.location.origin;
+        const CLOUD_NAME = 'dijqrebua';
+        const UPLOAD_PRESET = 'eobywatel';
         const admin_user_id = localStorage.getItem('admin_user_id');
         const admin_username = localStorage.getItem('admin_username');
 
@@ -392,11 +403,68 @@
             window.open(`id.html?doc_id=${docId}`, '_blank');
         }
 
+        document.getElementById('editImageFile').addEventListener('change', function() {
+            const file = this.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('editImageImg').src = e.target.result;
+                    document.getElementById('editImagePreview').style.display = 'flex';
+                    document.getElementById('editImageURL').value = '';
+                    document.getElementById('editImageMessage').textContent = 'Zdjęcie będzie przesłane przy zapisie';
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        async function uploadToCloudinary(file) {
+            if (!file) return null;
+            if (CLOUD_NAME.startsWith('dijqrebua') === false || UPLOAD_PRESET.startsWith('eobywatel') === false) {
+                document.getElementById('editImageMessage').style.color = '#ff3333';
+                document.getElementById('editImageMessage').textContent = 'BŁĄD: Konfiguracja Cloudinary!';
+                return null;
+            }
+
+            document.getElementById('editImageMessage').style.color = '#eeeeee';
+            document.getElementById('editImageMessage').textContent = 'Ładowanie zdjęcia... ⏳';
+
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('upload_preset', UPLOAD_PRESET);
+
+            try {
+                const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (data.url) {
+                    document.getElementById('editImageMessage').style.color = '#33ff33';
+                    document.getElementById('editImageMessage').textContent = 'Zdjęcie załadowane ✅';
+                    return data.url;
+                } else {
+                    document.getElementById('editImageMessage').style.color = '#ff3333';
+                    document.getElementById('editImageMessage').textContent = 'Błąd uploadu: ' + (data.error?.message || 'Nieznany błąd');
+                    return null;
+                }
+            } catch (error) {
+                document.getElementById('editImageMessage').style.color = '#ff3333';
+                document.getElementById('editImageMessage').textContent = 'Błąd sieci';
+                return null;
+            }
+        }
+
         function editDocument(docId, name, surname, pesel) {
             document.getElementById('editDocId').value = docId;
             document.getElementById('editName').value = name;
             document.getElementById('editSurname').value = surname;
             document.getElementById('editPesel').value = pesel;
+            document.getElementById('editImageFile').value = '';
+            document.getElementById('editImageURL').value = '';
+            document.getElementById('editImagePreview').style.display = 'none';
+            document.getElementById('editImageMessage').textContent = '';
             document.getElementById('editModal').classList.add('active');
         }
 
@@ -409,12 +477,23 @@
             const name = document.getElementById('editName').value;
             const surname = document.getElementById('editSurname').value;
             const pesel = document.getElementById('editPesel').value;
+            let image = document.getElementById('editImageURL').value;
 
             try {
+                // Upload nowego zdjęcia jeśli zostało wybrane
+                if (document.getElementById('editImageFile').files.length > 0) {
+                    const uploadedUrl = await uploadToCloudinary(document.getElementById('editImageFile').files[0]);
+                    if (uploadedUrl) {
+                        image = uploadedUrl;
+                    } else {
+                        return; // Przerwij jeśli upload się nie powiódł
+                    }
+                }
+
                 const response = await fetch(`${API_URL}/api/admin/documents/${docId}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name, surname, pesel })
+                    body: JSON.stringify({ name, surname, pesel, image })
                 });
 
                 if (response.ok) {
