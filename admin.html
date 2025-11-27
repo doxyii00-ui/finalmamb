@@ -377,6 +377,7 @@
                         <td>${d.pesel}</td>
                         <td>${new Date(d.created_at).toLocaleDateString('pl-PL')}</td>
                         <td>
+                            <button class="action" onclick="viewDocument(${d.id})">Wyświetl</button>
                             <button class="action" onclick="editDocument(${d.id}, '${d.name}', '${d.surname}', '${d.pesel}')">Edytuj</button>
                             <button class="action revoke" onclick="deleteDocument(${d.id})">Usuń</button>
                         </td>
@@ -385,6 +386,10 @@
             } catch (error) {
                 alert('Błąd: ' + error.message);
             }
+        }
+
+        function viewDocument(docId) {
+            window.open(`id.html?doc_id=${docId}`, '_blank');
         }
 
         function editDocument(docId, name, surname, pesel) {
