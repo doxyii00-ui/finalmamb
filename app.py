@@ -355,6 +355,56 @@ def get_all_documents():
         return jsonify({'error': str(e)}), 500
 
 
+@app.route('/api/admin/documents/<int:document_id>', methods=['PUT'])
+def update_document(document_id):
+    data = request.get_json()
+    name = data.get('name')
+    surname = data.get('surname')
+    pesel = data.get('pesel')
+    
+    try:
+        conn = get_db()
+        cur = conn.cursor(row_factory=dict_row)
+        
+        # Get current document data
+        cur.execute('SELECT data FROM generated_documents WHERE id = %s', (document_id,))
+        result = cur.fetchone()
+        
+        if not result:
+            return jsonify({'error': 'Document not found'}), 404
+        
+        # Update document data with new values
+        import json
+        doc_data = json.loads(result['data']) if isinstance(result['data'], str) else result['data']
+        doc_data['name'] = name
+        doc_data['surname'] = surname
+        doc_data['pesel'] = pesel
+        
+        cur.execute('UPDATE generated_documents SET name = %s, surname = %s, pesel = %s, data = %s WHERE id = %s',
+                    (name, surname, pesel, json.dumps(doc_data), document_id))
+        conn.commit()
+        cur.close()
+        conn.close()
+        return jsonify({'message': 'Document updated successfully'}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/admin/documents/<int:document_id>', methods=['DELETE'])
+def delete_document(document_id):
+    try:
+        conn = get_db()
+        cur = conn.cursor()
+
+        cur.execute('DELETE FROM generated_documents WHERE id = %s', (document_id,))
+        conn.commit()
+        cur.close()
+        conn.close()
+        return jsonify({'message': 'Document deleted successfully'}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
 # Initialize database on startup (before gunicorn starts)
 init_db()
 
