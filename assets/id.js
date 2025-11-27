@@ -17,6 +17,9 @@ async function fetchDocumentData() {
             sessionStorage.setItem('document_data', JSON.stringify(data));
             // Przechowaj doc_id dla home.html
             sessionStorage.setItem('doc_id', docId);
+        } else if (response.status === 404) {
+            // Dokument nie istnieje
+            document.body.innerHTML = '<div style="display: flex; justify-content: center; align-items: center; height: 100vh; background: #09020e; color: #ff3333; font-size: 1.5rem; font-family: Inter, sans-serif; text-align: center;">❌ Dokument nie istnieje lub został usunięty</div>';
         }
     } catch (error) {
         console.error('Błąd pobierania dokumentu:', error);
