@@ -222,12 +222,11 @@ body .bottom_bar{
     width: 35%;
     border-radius: 15px;
     height: 42%;
-    background-color: transparent;
+    background-color: white;
     background-position: center;
-    background-size: contain;
+    background-size: 100%;
     background-repeat: no-repeat;
     z-index: 0;
-    object-fit: contain;
 }
 
 .bottom_update{
