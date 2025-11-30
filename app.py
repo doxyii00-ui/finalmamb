@@ -360,6 +360,7 @@ def update_document(document_id):
     pesel = data.get('pesel')
     adress1 = data.get('adress1')
     adress2 = data.get('adress2')
+    birthPlace = data.get('birthPlace')
     image = data.get('image')
     
     try:
@@ -383,6 +384,8 @@ def update_document(document_id):
             doc_data['adress1'] = adress1
         if adress2:
             doc_data['adress2'] = adress2
+        if birthPlace:
+            doc_data['birthPlace'] = birthPlace
         if image:
             doc_data['image'] = image
         
