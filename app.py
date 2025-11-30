@@ -63,10 +63,19 @@ def init_db():
                 email VARCHAR(255),
                 has_access BOOLEAN DEFAULT FALSE,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                is_admin BOOLEAN DEFAULT FALSE
+                is_admin BOOLEAN DEFAULT FALSE,
+                hwid VARCHAR(255)
             )
         ''')
         print("Users table created/verified")
+        
+        # Add hwid column if it doesn't exist
+        try:
+            cur.execute('ALTER TABLE users ADD COLUMN hwid VARCHAR(255)')
+            conn.commit()
+            print("HWID column added to users table")
+        except psycopg.errors.DuplicateColumn:
+            print("HWID column already exists")
 
         # Generated documents table
         print("Creating generated_documents table...")
@@ -197,22 +206,40 @@ def login():
     data = request.get_json()
     username = data.get('username')
     password = data.get('password')
+    hwid = data.get('hwid')  # Optional - only for regular users
 
     try:
         conn = get_db()
         cur = conn.cursor(row_factory=dict_row)
         cur.execute('SELECT * FROM users WHERE username = %s', (username, ))
         user = cur.fetchone()
-        cur.close()
-        conn.close()
 
         if not user or user['password'] != password:
+            cur.close()
+            conn.close()
             return jsonify({'error': 'Invalid credentials'}), 401
 
         if not user['has_access']:
+            cur.close()
+            conn.close()
             return jsonify({'error':
                             'Access denied. Contact administrator'}), 403
 
+        # HWID validation - only for non-admin users (regular users with HWID)
+        if hwid:
+            # User sent HWID - validate it
+            if user['hwid']:
+                if user['hwid'] != hwid:
+                    cur.close()
+                    conn.close()
+                    return jsonify({'error': 'Device not authorized. Login from registered device only'}), 403
+            else:
+                # First login with HWID - save it
+                cur.execute('UPDATE users SET hwid = %s WHERE id = %s', (hwid, user['id']))
+                conn.commit()
+
+        cur.close()
+        conn.close()
         return jsonify({
             'user_id': user['id'],
             'username': user['username'],
