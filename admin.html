@@ -630,14 +630,23 @@
                 const response = await fetch(`${API_URL}/api/admin/codes`);
                 if (response.ok) {
                     const data = await response.json();
-                    const codes = data.codes.map(c => c.code).join('\n');
+                    // Pobierz TYLKO nieużyte kody
+                    const unusedCodes = data.codes.filter(c => !c.used).map(c => c.code);
+                    
+                    if (unusedCodes.length === 0) {
+                        alert('Brak dostępnych kodów do pobrania!');
+                        return;
+                    }
+                    
+                    const codesText = unusedCodes.join('\n');
                     const element = document.createElement('a');
-                    element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(codes));
-                    element.setAttribute('download', `kody-${new Date().toISOString().split('T')[0]}.txt`);
+                    element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(codesText));
+                    element.setAttribute('download', `kody-dostepne-${new Date().toISOString().split('T')[0]}.txt`);
                     element.style.display = 'none';
                     document.body.appendChild(element);
                     element.click();
                     document.body.removeChild(element);
+                    alert(`✓ Pobrano ${unusedCodes.length} nieużytych kodów`);
                 } else {
                     alert('Błąd przy pobieraniu kodów');
                 }
