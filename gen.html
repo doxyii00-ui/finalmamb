@@ -899,55 +899,61 @@
             const user_id = localStorage.getItem('user_id');
             let documentId = null;
             
-            if (user_id) {
-                try {
-                    const API_URL = window.location.origin;
-                    
-                    // Zbierz wszystkie dane dokumentu z mapowaniem na camelCase
-                    const allInputs = form.querySelectorAll('input, select');
-                    const fullDocData = {
-                        user_id: parseInt(user_id),
-                        image: imageURLInput.value
-                    };
-                    
-                    // Map underscored names to camelCase for consistency with card.js
-                    const nameMap = {
-                        family_name: "familyName",
-                        father_family_name: "fathersFamilyName",
-                        mother_family_name: "mothersFamilyName",
-                        birth_country: "countryOfBirth"
-                    };
-                    
-                    for (const input of allInputs) {
-                        const rawKey = input.name;
-                        if (!rawKey || rawKey === 'fileInput') continue;
-                        const finalKey = nameMap[rawKey] || rawKey;
-                        let value = input.value;
-                        
-                        // Convert birthday from YYYY-MM-DD to DD.MM.YYYY for storage
-                        if (rawKey === 'birthday' && value) {
-                            value = formatDateForURL(value);
-                        }
-                        
-                        fullDocData[finalKey] = value;
-                    }
-                    
-                    // Zapisz dokument i pobierz ID
-                    const response = await fetch(`${API_URL}/api/documents/create-and-get-id`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify(fullDocData)
-                    });
-                    
-                    if (response.ok) {
-                        const data = await response.json();
-                        documentId = data.document_id;
-                    }
-                } catch (error) {
-                    console.log('Błąd zapisywania dokumentu:', error);
+            try {
+                const API_URL = window.location.origin;
+                
+                // Zbierz wszystkie dane dokumentu z mapowaniem na camelCase
+                const allInputs = form.querySelectorAll('input, select');
+                const fullDocData = {
+                    image: imageURLInput.value
+                };
+                
+                // Dodaj user_id jeśli istnieje
+                if (user_id) {
+                    fullDocData.user_id = parseInt(user_id);
                 }
+                
+                // Map underscored names to camelCase for consistency with card.js
+                const nameMap = {
+                    family_name: "familyName",
+                    father_family_name: "fathersFamilyName",
+                    mother_family_name: "mothersFamilyName",
+                    birth_country: "countryOfBirth"
+                };
+                
+                for (const input of allInputs) {
+                    const rawKey = input.name;
+                    if (!rawKey || rawKey === 'fileInput') continue;
+                    const finalKey = nameMap[rawKey] || rawKey;
+                    let value = input.value;
+                    
+                    // Convert birthday from YYYY-MM-DD to DD.MM.YYYY for storage
+                    if (rawKey === 'birthday' && value) {
+                        value = formatDateForURL(value);
+                    }
+                    
+                    fullDocData[finalKey] = value;
+                }
+                
+                // Zapisz dokument i pobierz ID - ZAWSZE wysyłaj, nawet dla one-time access
+                const response = await fetch(`${API_URL}/api/documents/create-and-get-id`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(fullDocData)
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    documentId = data.document_id;
+                    console.log('✓ Document saved with ID:', documentId);
+                } else {
+                    const errorData = await response.json();
+                    console.log('✗ Backend error response:', response.status, errorData);
+                }
+            } catch (error) {
+                console.log('Błąd zapisywania dokumentu:', error);
             }
             
             // Usunięcie one-time access po wygenerowaniu dokumentu
