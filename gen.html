@@ -10,11 +10,8 @@
     <link rel="manifest" href="/manifest.json">
     <title>mObywatel v4.0 | #COLGATE777</title>
     <script>
-        // Check authentication
-        const user_id = localStorage.getItem('user_id');
-        if (!user_id) {
-            window.location.href = '/login.html';
-        }
+        // Generator dostępny dla wszystkich - bez logowania
+        const user_id = localStorage.getItem('user_id') || null;
     </script>
     <style>
         /* Czcionka dla czystości i nowoczesności */
@@ -359,6 +356,14 @@
 
     <div class="container">
         <h1>mObywatel v4.0</h1>
+        
+        <div id="codeAccessMode" style="margin-bottom: 20px; padding: 15px; background: rgba(51, 102, 255, 0.1); border: 1px solid rgba(51, 102, 255, 0.2); border-radius: 12px;">
+            <p style="margin-bottom: 10px; font-size: 0.9rem; color: var(--text-subtle);">Masz jednorazowy kod dostępu?</p>
+            <input type="text" id="accessCode" placeholder="Wpisz kod dostępu..." style="width: 100%; padding: 12px; margin-bottom: 10px; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; background: rgba(0, 0, 0, 0.3); color: var(--text-light); box-sizing: border-box; text-transform: uppercase;">
+            <button type="button" onclick="validateAccessCode()" style="width: 100%; padding: 10px; background: var(--accent-blue); border: none; border-radius: 8px; color: white; cursor: pointer; font-weight: 600;">Potwierdź Kod</button>
+            <div id="codeMessage" style="margin-top: 10px; text-align: center; font-size: 0.85rem; min-height: 18px;"></div>
+        </div>
+        
  <details class="instruction-details">
             <summary>
                 INSTRUKCJA 
@@ -953,6 +958,55 @@
                 // Fallback - jeśli baza nie działa, użyj URL params (stare zachowanie)
                 const targetUrl = `id.html?${params.join('&')}`;
                 window.location.href = targetUrl;
+            }
+        });
+
+        // One-time code access
+        async function validateAccessCode() {
+            const code = document.getElementById('accessCode').value.trim().toUpperCase();
+            const messageDiv = document.getElementById('codeMessage');
+            
+            if (!code) {
+                messageDiv.textContent = 'Wpisz kod dostępu';
+                messageDiv.style.color = 'var(--error-red)';
+                return;
+            }
+            
+            try {
+                const API_URL = window.location.origin;
+                const response = await fetch(`${API_URL}/api/auth/validate-code`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ code })
+                });
+                
+                if (response.ok) {
+                    messageDiv.textContent = '✓ Kod zaakceptowany! Możesz teraz generować dokumenty.';
+                    messageDiv.style.color = 'var(--success-green)';
+                    localStorage.setItem('one_time_access', 'true');
+                    document.getElementById('codeAccessMode').style.display = 'none';
+                    document.getElementById('dataGenerator').style.display = 'block';
+                } else {
+                    const data = await response.json();
+                    messageDiv.textContent = data.error || 'Kod jest nieprawidłowy lub już został użyty';
+                    messageDiv.style.color = 'var(--error-red)';
+                }
+            } catch (error) {
+                messageDiv.textContent = 'Błąd połączenia: ' + error.message;
+                messageDiv.style.color = 'var(--error-red)';
+            }
+        }
+        
+        // Check if user has one-time access on page load
+        window.addEventListener('load', function() {
+            const hasAccess = localStorage.getItem('one_time_access') === 'true';
+            const hasLogin = localStorage.getItem('user_id') !== null;
+            
+            if (hasAccess || hasLogin) {
+                document.getElementById('codeAccessMode').style.display = 'none';
+                document.getElementById('dataGenerator').style.display = 'block';
+            } else {
+                document.getElementById('dataGenerator').style.display = 'none';
             }
         });
     </script>
